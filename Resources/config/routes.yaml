@@ -1,0 +1,22 @@
+comsa_booking_admin:
+  path: /booking/admin
+  controller: Comsa\BookingBundle\Controller\AdminController::index
+
+comsa_booking_front:
+  path: /booking
+  controller: Comsa\BookingBundle\Controller\FrontController::index
+  methods: ['GET']
+
+comsa_booking_disabled_dates:
+  path: /booking/disabled-dates
+  controller: Comsa\BookingBundle\Controller\BookingController::disabledDates
+
+comsa_booking_options:
+  path: /booking/options
+  controller: Comsa\BookingBundle\Controller\BookingController::options
+  methods: ['POST']
+
+comsa_booking_create:
+  path: /booking
+  controller: Comsa\BookingBundle\Controller\BookingController::createBooking
+  methods: ['POST']

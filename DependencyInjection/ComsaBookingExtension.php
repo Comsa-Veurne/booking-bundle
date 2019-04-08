@@ -8,20 +8,29 @@
 
 namespace Comsa\BookingBundle\DependencyInjection;
 
-
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Extension\Extension;
+use Symfony\Component\DependencyInjection\Extension\PrependExtensionInterface;
 use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
 
-class ComsaBookingBundleExtension extends Extension
+class ComsaBookingExtension extends Extension implements PrependExtensionInterface
 {
     public function load(array $configs, ContainerBuilder $container)
     {
-        $loader = new YamlFileLoader(
+        $this->getLoader($container)->load('services.yaml');
+    }
+
+    public function prepend(ContainerBuilder $container)
+    {
+        $this->getLoader($container)->load('doctrine.yaml');
+    }
+
+    private function getLoader(ContainerBuilder $container)
+    {
+        return new YamlFileLoader(
             $container,
             new FileLocator(__DIR__. '/../Resources/config')
         );
-        $loader->load('services.yaml');
     }
 }

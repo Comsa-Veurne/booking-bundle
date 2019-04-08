@@ -2,6 +2,7 @@
 
 namespace Comsa\BookingBundle\Repository;
 
+use Comsa\BookingBundle\Entity\Reservable;
 use Comsa\BookingBundle\Entity\Reservation;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Symfony\Bridge\Doctrine\RegistryInterface;
@@ -17,6 +18,27 @@ class ReservationRepository extends ServiceEntityRepository
     public function __construct(RegistryInterface $registry)
     {
         parent::__construct($registry, Reservation::class);
+    }
+
+    public function findAllForOverview()
+    {
+        return $this->createQueryBuilder('r')
+            ->innerJoin('r.reservableInterval', 'ri')
+            ->orderBy('r.date', 'ASC')
+            ->addOrderBy('ri.timeTo', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    public function findAllUpcomingReservationsByReservable(Reservable $reservable)
+    {
+        return $this->createQueryBuilder('i')
+            ->where('i.date > :now')
+            ->andWhere('i.reservable = :reservable')
+            ->setParameter('reservable', $reservable)
+            ->setParameter('now', new \DateTime())
+            ->getQuery()
+            ->getResult();
     }
 
     // /**

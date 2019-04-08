@@ -1,0 +1,33 @@
+services:
+  _defaults:
+    autowire: true
+    autoconfigure: true
+    public: false
+
+  Comsa\BookingBundle\Controller\:
+    resource: '../../Controller/*'
+
+  Comsa\BookingBundle\Repository\:
+    resource: '../../Repository/*'
+
+  Comsa\BookingBundle\Manager\:
+    resource: '../../Manager/*'
+
+  comsa_booking_serializer:
+    class: Symfony\Component\Serializer\Serializer
+    autowire: true
+
+  datetime_normalizer:
+    class: Symfony\Component\Serializer\Normalizer\DateTimeNormalizer
+    public: false
+    tags: [serializer.normalizer]
+
+  get_set_method_normalizer:
+    class: Symfony\Component\Serializer\Normalizer\GetSetMethodNormalizer
+    public: false
+    tags: [serializer.normalizer]
+
+  jms_serializer.serialized_name_annotation_strategy:
+    class: JMS\Serializer\Naming\SerializedNameAnnotationStrategy
+    arguments:
+      - '@jms_serializer.identical_property_naming_strategy'

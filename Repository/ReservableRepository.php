@@ -3,8 +3,11 @@
 namespace Comsa\BookingBundle\Repository;
 
 use Comsa\BookingBundle\Entity\Reservable;
+use Comsa\BookingBundle\Entity\ReservableInterval;
+use Comsa\BookingBundle\Entity\Reservation;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Symfony\Bridge\Doctrine\RegistryInterface;
+use Symfony\Component\Routing\Exception\ResourceNotFoundException;
 
 /**
  * @method Reservable|null find($id, $lockMode = null, $lockVersion = null)
@@ -17,6 +20,30 @@ class ReservableRepository extends ServiceEntityRepository
     public function __construct(RegistryInterface $registry)
     {
         parent::__construct($registry, Reservable::class);
+    }
+
+    public function findSuitableReservable($amountPersons)
+    {
+        return $this->createQueryBuilder('i')
+            ->where('i.capacity >= :amountPersons')
+            ->setParameter('amountPersons', $amountPersons)
+            ->getQuery()
+            ->getResult();
+    }
+
+    public function findHighestCapacity()
+    {
+        $highestCapacityReservable = $this->createQueryBuilder('i')
+            ->orderBy('i.capacity', 'DESC')
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
+
+        if (!$highestCapacityReservable instanceof Reservable) {
+            throw new ResourceNotFoundException();
+        }
+
+        return $highestCapacityReservable->getCapacity();
     }
 
     // /**

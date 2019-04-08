@@ -40,3 +40,33 @@ Update the database
 ```
 bin/console doctrine:schema:update -f
 ```
+
+Enable the security bundle by requiring it and enable it in AppKernel
+```
+new \Symfony\Bundle\SecurityBundle\SecurityBundle()
+```
+
+And add the following to config.yml or security.yml
+```
+security:
+    encoders:
+        Symfony\Component\Security\Core\User\User: plaintext
+    providers:
+        in_memory:
+            memory:
+                users:
+                    admin:
+                        password: booking
+                        roles: 'ROLE_ADMIN'
+    firewalls:
+        dev:
+            pattern: ^/(_(profiler|wdt)|css|images|js)/
+            security: false
+
+        main:
+            anonymous: ~
+            http_basic: ~
+
+    access_control:
+        - { path: ^/booking/admin, roles: ROLE_ADMIN }
+```

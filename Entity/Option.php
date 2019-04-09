@@ -17,14 +17,14 @@ class Option implements Translatable
      * @ORM\Id()
      * @ORM\GeneratedValue()
      * @ORM\Column(type="integer")
-     * @Serializer\Groups({"reservation"})
+     * @Serializer\Groups({"option", "reservation"})
      */
     private $id;
 
     /**
      * @Gedmo\Translatable()
      * @ORM\Column(type="string", length=255)
-     * @Serializer\Groups({"reservation"})
+     * @Serializer\Groups({"option", "reservation"})
      */
     private $title;
 
@@ -35,7 +35,7 @@ class Option implements Translatable
 
     /**
      * @ORM\Column(type="decimal", precision=10, scale=2)
-     * @Serializer\Groups({"reservation"})
+     * @Serializer\Groups({"option", "reservation"})
      */
     private $price;
 

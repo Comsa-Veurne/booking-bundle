@@ -14,6 +14,8 @@ use Comsa\BookingBundle\Repository\ReservableRepository;
 use Comsa\BookingBundle\Repository\ReservationRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\EntityManagerInterface;
+use FOS\RestBundle\Controller\AbstractFOSRestController;
+use FOS\RestBundle\Controller\Annotations as Rest;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -22,7 +24,11 @@ use Symfony\Component\Routing\Annotation\Route;
 use JMS\Serializer\SerializationContext;
 use JMS\Serializer\SerializerInterface;
 
-class BookingController extends AbstractController
+/**
+ * Class BookingController
+ * @package Comsa\BookingBundle\Controller
+ */
+class BookingController extends AbstractFOSRestController
 {
     /**
      * @var OptionRepository
@@ -43,6 +49,15 @@ class BookingController extends AbstractController
         $this->em = $em;
     }
 
+    /**
+     * @param Request $request
+     * @param ReservationRepository $reservationRepository
+     * @param ReservableRepository $reservableRepository
+     * @param EntityManagerInterface $em
+     * @param BookingManager $bookingManager
+     * @return JsonResponse
+     * @Rest\Post("/disabled-dates")
+     */
     public function disabledDates(Request $request, ReservationRepository $reservationRepository, ReservableRepository $reservableRepository, EntityManagerInterface $em, BookingManager $bookingManager): JsonResponse
     {
         $requestContent = json_decode($request->getContent(), true);
@@ -62,6 +77,13 @@ class BookingController extends AbstractController
         return new JsonResponse($disabledDates);
     }
 
+    /**
+     * @param Request $request
+     * @param ReservableRepository $reservableRepository
+     * @param SerializerInterface $serializer
+     * @return Response
+     * @Rest\Post("/reservables")
+     */
     public function reservables(Request $request, ReservableRepository $reservableRepository, SerializerInterface $serializer)
     {
         $requestContent = json_decode($request->getContent(), true);
@@ -72,6 +94,16 @@ class BookingController extends AbstractController
         ])));
     }
 
+    /**
+     * @param Request $request
+     * @param ReservableRepository $reservableRepository
+     * @param ReservableIntervalRepository $intervalRepository
+     * @param SerializerInterface $serializer
+     * @param BookingManager $bookingManager
+     * @return JsonResponse
+     * @throws \Exception
+     * @Rest\Post("/intervals")
+     */
     public function intervals(Request $request, ReservableRepository $reservableRepository, ReservableIntervalRepository $intervalRepository, SerializerInterface $serializer, BookingManager $bookingManager)
     {
         $requestContent = json_decode($request->getContent(), true);
@@ -104,17 +136,35 @@ class BookingController extends AbstractController
         return new JsonResponse($returnIntervals);
     }
 
+    /**
+     * @param ReservableRepository $reservableRepository
+     * @return JsonResponse
+     * @Rest\Get("/max-persons")
+     */
     public function maxPersons(ReservableRepository $reservableRepository)
     {
         return new JsonResponse($reservableRepository->findHighestCapacity());
     }
 
+    /**
+     * @param Request $request
+     * @param SerializerInterface $serializer
+     * @return Response
+     * @Rest\Get("/options")
+     */
     public function options(Request $request, SerializerInterface $serializer)
     {
         $requestContent = json_decode($request->getContent(), true);
         return new Response($serializer->serialize((array) $this->optionRepository->findAll(), 'json'));
     }
 
+    /**
+     * @param Request $request
+     * @param SerializerInterface $serializer
+     * @return Response
+     * @throws \Exception
+     * @Rest\Post("/bookings")
+     */
     public function createBooking(Request $request, SerializerInterface $serializer) {
         $requestContent = json_decode($request->getContent(), true);
         //-- Transfer json into a reservation entity

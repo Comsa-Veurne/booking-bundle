@@ -1,58 +1,20 @@
-comsa_booking_admin:
+api_login_check:
+  path: /booking/api/login
+
+booking_admin:
   path: /booking/admin
-  controller: Comsa\BookingBundle\Controller\AdminController::index
+  controller: Comsa\BookingBundle\Controller\AdminController:index
 
-comsa_booking_admin_create_option:
-  path: /booking/admin/options
-  controller: Comsa\BookingBundle\Controller\AdminController::createOption
-  methods: ['POST']
-
-comsa_booking_admin_update_option:
-  path: /booking/admin/options
-  controller: Comsa\BookingBundle\Controller\AdminController::updateOption
-  methods: ['PUT']
-
-comsa_booking_front:
+booking:
   path: /booking
-  controller: Comsa\BookingBundle\Controller\FrontController::index
-  methods: ['GET']
+  controller: Comsa\BookingBundle\Controller\FrontController:index
 
-comsa_booking_disabled_dates:
-  path: /booking/disabled-dates
-  controller: Comsa\BookingBundle\Controller\BookingController::disabledDates
-  methods: ['POST']
+admin:
+  type: annotation
+  resource: Comsa\BookingBundle\Controller\AdminController
+  prefix: /booking/api
 
-comsa_booking_reservables:
-  path: /booking/reservables
-  controller: Comsa\BookingBundle\Controller\BookingController::reservables
-  methods: ['POST']
-
-comsa_booking_options:
-  path: /booking/options
-  controller: Comsa\BookingBundle\Controller\BookingController::options
-  methods: ['POST']
-
-comsa_booking_max_persons:
-  path: /booking/max_persons
-  controller: Comsa\BookingBundle\Controller\BookingController::maxPersons
-  methods: ['GET']
-
-comsa_booking_intervals:
-  path: /booking/intervals
-  controller: Comsa\BookingBundle\Controller\BookingController::intervals
-  methods: ['POST']
-
-comsa_booking_create:
-  path: /booking
-  controller: Comsa\BookingBundle\Controller\BookingController::createBooking
-  methods: ['POST']
-
-comsa_booking_reservations:
-  path: /booking/reservations
-  controller: Comsa\BookingBundle\Controller\AdminController::reservations
-  methods: ['GET']
-
-comsa_booking_reservation:
-  path: /booking/reservations/{id}
-  controller: Comsa\BookingBundle\Controller\AdminController::reservation
-  methods: ['GET']
+booking_front:
+  type: annotation
+  resource: Comsa\BookingBundle\Controller\BookingController
+  prefix: /booking/api

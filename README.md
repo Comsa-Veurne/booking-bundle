@@ -70,3 +70,31 @@ security:
     access_control:
         - { path: ^/booking/admin, roles: ROLE_ADMIN }
 ```
+
+## Security
+```
+composer req lexik/jwt-authentication-bundle
+```
+```
+new \Lexik\Bundle\JWTAuthenticationBundle\LexikJWTAuthenticationBundle()
+```
+Generate SSH keys
+```
+mkdir -p config/jwt # For Symfony3+, no need of the -p option
+openssl genrsa -out config/jwt/private.pem -aes256 4096
+openssl rsa -pubout -in config/jwt/private.pem -out config/jwt/public.pem
+```
+Configure the SSH keys path in your config/packages/lexik_jwt_authentication.yaml :
+```
+lexik_jwt_authentication:
+    secret_key:       '%kernel.project_dir%/config/jwt/private.pem' # required for token creation
+    public_key:       '%kernel.project_dir%/config/jwt/public.pem'  # required for token verification
+    pass_phrase:      'your_secret_passphrase' # required for token creation, usage of an environment variable is recommended
+    token_ttl:        3600
+```
+
+Add to .htaccess
+```
+RewriteCond %{HTTP:Authorization} .
+RewriteRule ^ - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+```

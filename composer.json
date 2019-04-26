@@ -16,7 +16,7 @@
         "gesdinet/jwt-refresh-token-bundle": "^0.6.2",
         "friendsofsymfony/rest-bundle": "^2.5",
         "symfony/orm-pack": "^1.0",
-        "symfony/twig-bundle": "^4.2"
+        "symfony/twig-bundle": "4.1.*"
     },
     "autoload": {
         "psr-4": {

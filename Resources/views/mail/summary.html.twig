@@ -1,0 +1,70 @@
+<style>
+    table {
+        text-align: left;
+        width: 100%;
+    }
+</style>
+
+<h2>Persoonlijke gegevens:</h2>
+<table>
+    <thead>
+    <tr>
+        <th>Naam</th>
+        {% if booking.address.phone|length %}<th>Email</th>{% endif %}
+        <th>Telefoonnummer</th>
+        <th>Adres</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+        <td>{{ booking.address.name }}</td>
+        <td>{{ booking.address.email }}</td>
+        {% if booking.address.phone|length %}<td>{{ booking.address.phone }}</td>{% endif %}
+        <td>
+            {{ booking.address.street ~ ' ' ~ booking.address.street }}<br/>
+            {{ booking.address.city ~ ', ' ~ booking.address.postal }}
+        </td>
+    </tr>
+    </tbody>
+</table>
+
+<h2>Reservatie details:</h2>
+<table>
+    <thead>
+    <tr>
+        <th>Startdatum</th>
+        <th>Einddatum</th>
+        <th>Aantal personen</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+        <td>{{ booking.startDate | date('Y-m-d H:i') }}</td>
+        <td>{{ booking.endDate | date('Y-m-d H:i') }}</td>
+        <td>{{ booking.amountPersons }}</td>
+    </tr>
+    </tbody>
+</table>
+    {% if booking.reservationOptions|length %}
+    <h2>Extra opties</h2>
+    <table>
+        <thead>
+        <tr>
+            <th></th>
+            <th>Prijs</th>
+            <th>Aantal</th>
+            <th>Totaal</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for reservationOption in booking.reservationOptions %}
+        <tr>
+            <td>{{ reservationOption.linkedOption.title }}</td>
+            <td>{{ '€' ~ reservationOption.linkedOption.price }}</td>
+            <td>{{ reservationOption.times }}</td>
+            <td>{{ '€' ~ reservationOption.times * reservationOption.linkedOption.price }}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}

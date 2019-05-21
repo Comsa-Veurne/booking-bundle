@@ -27,8 +27,39 @@ class ReservableRepository extends ServiceEntityRepository
         return $this->createQueryBuilder('i')
             ->where('i.capacity >= :amountPersons')
             ->setParameter('amountPersons', $amountPersons)
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
+
+    public function findSuitableReservables($amountPersons)
+    {
+        return $this->createQueryBuilder('i')
+            ->where('i.capacity >= :amountPersons')
+            ->setParameter('amountPersons', $amountPersons)
             ->getQuery()
             ->getResult();
+    }
+
+    public function findHighestCapacityForMatches($matches)
+    {
+        usort($matches, function($a, $b) {
+            return $b['capacity'] - $a['capacity'];
+        });
+        return $matches[0]['capacity'];
+    }
+
+    public function findSufficientCapacityForMatches($matches, $amountPersons) {
+        foreach ($matches as $key => $match) {
+            if ($match['capacity'] < $amountPersons) {
+                unset($matches[$key]);
+            }
+        }
+
+        usort($matches, function($a, $b) {
+            return $a['capacity'] - $b['capacity'];
+        });
+        return $matches[0];
     }
 
     public function findHighestCapacity()
@@ -45,33 +76,4 @@ class ReservableRepository extends ServiceEntityRepository
 
         return $highestCapacityReservable->getCapacity();
     }
-
-    // /**
-    //  * @return Reservable[] Returns an array of Reservable objects
-    //  */
-    /*
-    public function findByExampleField($value)
-    {
-        return $this->createQueryBuilder('r')
-            ->andWhere('r.exampleField = :val')
-            ->setParameter('val', $value)
-            ->orderBy('r.id', 'ASC')
-            ->setMaxResults(10)
-            ->getQuery()
-            ->getResult()
-        ;
-    }
-    */
-
-    /*
-    public function findOneBySomeField($value): ?Reservable
-    {
-        return $this->createQueryBuilder('r')
-            ->andWhere('r.exampleField = :val')
-            ->setParameter('val', $value)
-            ->getQuery()
-            ->getOneOrNullResult()
-        ;
-    }
-    */
 }

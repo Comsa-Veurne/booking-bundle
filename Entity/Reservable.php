@@ -34,12 +34,13 @@ class Reservable
     private $title;
 
     /**
-     * @ORM\OneToMany(targetEntity="Comsa\BookingBundle\Entity\ReservableInterval", mappedBy="reservable", orphanRemoval=true)
+     * @ORM\OneToMany(targetEntity="Comsa\BookingBundle\Entity\ReservableInterval", mappedBy="reservable", orphanRemoval=true, cascade={"persist"})
+     * @Serializer\Groups({"reservable"})
      */
     private $reservableIntervals;
 
     /**
-     * @ORM\OneToMany(targetEntity="Comsa\BookingBundle\Entity\Reservation", mappedBy="reservable")
+     * @ORM\ManyToMany(targetEntity="Comsa\BookingBundle\Entity\Reservation", mappedBy="reservables")
      */
     private $reservations;
 
@@ -76,6 +77,11 @@ class Reservable
         $this->title = $title;
 
         return $this;
+    }
+
+    public function setReservableIntervals($reservableIntervals): void
+    {
+        $this->reservableIntervals = $reservableIntervals;
     }
 
     /**

@@ -35,32 +35,19 @@ class ReservableIntervalRepository extends ServiceEntityRepository
         //-- For now simply return the intervals, later expand per date filter
         return $reservable->getReservableIntervals();
     }
-    // /**
-    //  * @return ReservableInterval[] Returns an array of ReservableInterval objects
-    //  */
-    /*
-    public function findByExampleField($value)
-    {
-        return $this->createQueryBuilder('r')
-            ->andWhere('r.exampleField = :val')
-            ->setParameter('val', $value)
-            ->orderBy('r.id', 'ASC')
-            ->setMaxResults(10)
-            ->getQuery()
-            ->getResult()
-        ;
-    }
-    */
 
-    /*
-    public function findOneBySomeField($value): ?ReservableInterval
-    {
-        return $this->createQueryBuilder('r')
-            ->andWhere('r.exampleField = :val')
-            ->setParameter('val', $value)
-            ->getQuery()
-            ->getOneOrNullResult()
-        ;
+    public function findMatches() {
+        $intervals = $this->findAll();
+        $matches = [];
+        foreach ($intervals as $interval) {
+            $identifier = $interval->getTimeFrom()->format('Hi') . $interval->getTimeTo()->format('Hi');
+            if (!isset($matches[$identifier])) {
+                $matches[$identifier]['intervals'] = [];
+                $matches[$identifier]['capacity'] = 0;
+            }
+            $matches[$identifier]['intervals'][] = $interval;
+            $matches[$identifier]['capacity'] += $interval->getReservable()->getCapacity();
+        }
+        return $matches;
     }
-    */
 }

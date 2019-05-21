@@ -3,6 +3,7 @@
 namespace Comsa\BookingBundle\Repository;
 
 use Comsa\BookingBundle\Entity\Option;
+use Comsa\BookingBundle\Entity\ReservableInterval;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Symfony\Bridge\Doctrine\RegistryInterface;
 
@@ -17,6 +18,16 @@ class OptionRepository extends ServiceEntityRepository
     public function __construct(RegistryInterface $registry)
     {
         parent::__construct($registry, Option::class);
+    }
+
+    public function findByCriteria(ReservableInterval $interval)
+    {
+        return $this->createQueryBuilder('o')
+            ->leftJoin('o.intervals', 'i')
+            ->andWhere('i = :interval OR i IS NULL')
+            ->setParameter('interval', $interval)
+            ->getQuery()
+            ->getResult();
     }
 
     // /**

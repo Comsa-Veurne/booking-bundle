@@ -7,6 +7,7 @@ use Comsa\BookingBundle\Entity\Reservable;
 use Comsa\BookingBundle\Entity\ReservableInterval;
 use Comsa\BookingBundle\Entity\Reservation;
 use Comsa\BookingBundle\Entity\ReservationOption;
+use Comsa\BookingBundle\Event\ReservationCreated;
 use Comsa\BookingBundle\Manager\BookingManager;
 use Comsa\BookingBundle\Repository\OptionRepository;
 use Comsa\BookingBundle\Repository\ReservableIntervalRepository;
@@ -17,6 +18,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use FOS\RestBundle\Controller\AbstractFOSRestController;
 use FOS\RestBundle\Controller\Annotations as Rest;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -61,20 +63,56 @@ class BookingController extends AbstractFOSRestController
     public function disabledDates(Request $request, ReservationRepository $reservationRepository, ReservableRepository $reservableRepository, EntityManagerInterface $em, BookingManager $bookingManager): JsonResponse
     {
         $requestContent = json_decode($request->getContent(), true);
-        $reservableId = $requestContent['reservable'];
+        $reservables = $requestContent['reservables'];
         $amountPersons = $requestContent['amountPersons'];
+        $firstDayOfMonth = (new \DateTime())->setTimestamp(strtotime($requestContent['firstDayOfMonth']));
+        $firstDayOfMonth->setTime(0, 0, 0, 0);
 
-        $reservations = $reservationRepository->findAll();
+        $dayRange = [];
+        $daysInMonth = cal_days_in_month(
+            CAL_GREGORIAN,
+            (int) $firstDayOfMonth->format('n'),
+            (int) $firstDayOfMonth->format('Y')
+        );
 
-        if ($reservableId) {
-            //-- Specific to reservable
-            $reservable = $reservableRepository->find($reservableId);
-            $disabledDates = $bookingManager->getDisabledDatesForReservable($reservable);
-        } else {
-            //-- Not specific to reservable (uses amount of persons)
-            $disabledDates = $bookingManager->getDisabledDatesForAmountPersons($amountPersons);
+        for ($i = 1; $i <= $daysInMonth; $i++) {
+            $tmpDate = clone $firstDayOfMonth;
+            $tmpDate->setDate($firstDayOfMonth->format('Y'), $firstDayOfMonth->format('n'), $i);
+            $dayRange[] = $tmpDate;
+            unset($tmpDate);
         }
-        return new JsonResponse($disabledDates);
+
+        if (count($reservables) === 1) {
+            //-- Doesn't matter which reservable
+            //-- Fetch disabled dates for all reservables, but if not in one date should be disabled
+            $disabledDatesCollection = [];
+            $reservables = $reservableRepository->findSuitableReservables($amountPersons);
+            $first = true;
+            foreach ($reservables as $reservable) {
+                $disabledDatesForReservable = $bookingManager->getDisabledDatesForReservable($reservable, $dayRange);
+                if ($first) {
+                    $disabledDatesCollection = $disabledDatesForReservable;
+                    $first = false;
+                    continue;
+                }
+
+                foreach ($disabledDatesCollection as $key => $disabledDate) {
+                    if (!in_array($disabledDate, $disabledDatesForReservable)) {
+                        unset($disabledDatesCollection[$key]);
+                    }
+                }
+            }
+            return new JsonResponse(array_unique($disabledDatesCollection));
+        } else {
+            //-- Certain match was given
+            //-- Fetch disabled dates for all reservables
+            $disabledDatesCollection = [];
+            foreach ($reservables as $reservable) {
+                $reservableEntity = $em->getReference(Reservable::class, $reservable['id']);
+                $disabledDatesCollection = array_merge($disabledDatesCollection, $bookingManager->getDisabledDatesForReservable($reservableEntity, $dayRange));
+            }
+            return new JsonResponse(array_unique($disabledDatesCollection));
+        }
     }
 
     /**
@@ -82,14 +120,44 @@ class BookingController extends AbstractFOSRestController
      * @param ReservableRepository $reservableRepository
      * @param SerializerInterface $serializer
      * @return Response
-     * @Rest\Post("/reservables")
+     * @Rest\Post("/reservables-for-criteria")
      */
-    public function reservables(Request $request, ReservableRepository $reservableRepository, SerializerInterface $serializer)
+    public function reservables(Request $request, ReservableRepository $reservableRepository, SerializerInterface $serializer, ReservableIntervalRepository $reservableIntervalRepository)
     {
         $requestContent = json_decode($request->getContent(), true);
+
+        //-- We have this amount of persons
         $amountPersons = $requestContent['amountPersons'];
-        $reservables = $reservableRepository->findSuitableReservable($amountPersons);
-        return new Response($serializer->serialize($reservables, 'json', SerializationContext::create()->setGroups([
+
+        //-- Do we have a reservable that fits all?
+        $reservableThatFitsAll = $reservableRepository->findSuitableReservable($amountPersons);
+
+        if (!$reservableThatFitsAll) {
+            $matches = $reservableIntervalRepository->findMatches();
+            $match = $reservableRepository->findSufficientCapacityForMatches($matches, $amountPersons);
+
+            $reservables = [];
+            foreach ($match['intervals'] as $interval) {
+                if (!in_array($interval->getReservable(), $reservables)) {
+                    $reservables[] = $interval->getReservable();
+                }
+            }
+        } else {
+            $reservables = [
+                $reservableThatFitsAll
+            ];
+        }
+
+        $capacity = 0;
+        $requiredReservables = new ArrayCollection();
+        foreach ($reservables as $reservable) {
+            $capacity += $reservable->getCapacity();
+            $requiredReservables->add($reservable);
+            if ($capacity >= $amountPersons) {
+                break;
+            }
+        }
+        return new Response($serializer->serialize($requiredReservables, 'json', SerializationContext::create()->setGroups([
             'groups' => 'reservable'
         ])));
     }
@@ -107,33 +175,75 @@ class BookingController extends AbstractFOSRestController
     public function intervals(Request $request, ReservableRepository $reservableRepository, ReservableIntervalRepository $intervalRepository, SerializerInterface $serializer, BookingManager $bookingManager)
     {
         $requestContent = json_decode($request->getContent(), true);
-        $reservableId = isset($requestContent['reservable']) ? $requestContent['reservable'] : 0;
+        $reservables = $requestContent['reservables'];
         $date = (new \DateTime($requestContent['date']))->setTime(0, 0, 0, 0);
         $amountPersons = $requestContent['amountPersons'];
 
-        if ($reservableId) {
-            $reservable = $reservableRepository->find($reservableId);
-            $intervals = $bookingManager->getIntervalsForReservableOnDate($reservable, $date);
+        //-- If only one reservable, it doesn't matter which one it is, if two it's a match so both are required and can't be changed
+        if (count($reservables) === 1) {
+            $reservables =  $reservableRepository->findSuitableReservables($amountPersons);
+            $intervalCollection = [];
+            foreach ($reservables as $reservable) {
+                $intervals = $bookingManager->getIntervalsForReservableOnDate($reservable, $date);
+                $intervalCollection = array_merge($intervalCollection, $intervals->toArray());
+            }
         } else {
-            $intervals = new ArrayCollection();
-            /** @var Reservable $reservable */
-            foreach ($reservableRepository->findSuitableReservable($amountPersons) as $reservable) {
-                $intervalsForReservable = $bookingManager->getIntervalsForReservableOnDate($reservable, $date);
-                $intervals = new ArrayCollection($intervals->toArray() + $intervalsForReservable->toArray());
+            $intervalCollection = [];
+            foreach ($reservables as $reservable) {
+                $reservableEntity = $reservableRepository->find($reservable['id']);
+                $intervals = $bookingManager->getIntervalsForReservableOnDate($reservableEntity, $date);
+                $intervalCollection = array_merge($intervals->toArray(), $intervalCollection);
+            }
+
+            /** @var ReservableInterval $intervalInCollection */
+            foreach ($intervalCollection as $key => $intervalInCollection) {
+                $found = false;
+                /** @var ReservableInterval $intervalTmpInCollection */
+                foreach ($intervalCollection as $intervalTmpInCollection) {
+                    if (
+                        $intervalTmpInCollection->getId() !== $intervalInCollection->getId() &&
+                        $intervalTmpInCollection->getTimeTo()->format('H:i') === $intervalInCollection->getTimeTo()->format('H:i') &&
+                        $intervalTmpInCollection->getTimeFrom()->format('H:i') === $intervalInCollection->getTimeFrom()->format('H:i')
+                    ) {
+                        $found = true;
+                    }
+                }
+
+                if (!$found) {
+                    unset($intervalCollection[$key]);
+                }
             }
         }
 
         $returnIntervals = [];
         /** @var ReservableInterval $interval */
-        foreach ($intervals as $interval) {
-            $returnIntervals[] = [
-                'from' => $interval->getTimeFrom()->format('H:i'),
-                'to' => $interval->getTimeTo()->format('H:i'),
-                'id' => $interval->getId()
-            ];
+        foreach ($intervalCollection as $interval) {
+            $identifier = $interval->getTimeFrom()->format('Hi') . $interval->getTimeTo()->format('Hi');
+
+            if (isset($returnIntervals[$identifier])) {
+                $returnIntervals[$identifier]['ids'][] = $interval->getId();
+            } else {
+                $returnIntervals[$identifier] = [
+                    'from' => $interval->getTimeFrom()->format('H:i'),
+                    'to' => $interval->getTimeTo()->format('H:i'),
+                    'ids' => [$interval->getId()],
+                    'price' => $interval->getPrice(),
+                    'pricePerPerson' => $interval->getPricePerPerson()
+                ];
+            }
         }
 
-        return new JsonResponse($returnIntervals);
+        $return = [];
+        foreach ($returnIntervals as $interval) {
+            if ($interval['pricePerPerson'] > 0) {
+                $interval['activePrice'] = $interval['pricePerPerson'] * $amountPersons;
+            } else {
+                $interval['activePrice'] = $interval['price'];
+            }
+            $return[] = $interval;
+        }
+
+        return new JsonResponse($return);
     }
 
     /**
@@ -141,21 +251,50 @@ class BookingController extends AbstractFOSRestController
      * @return JsonResponse
      * @Rest\Get("/max-persons")
      */
-    public function maxPersons(ReservableRepository $reservableRepository)
+    public function maxPersons(ReservableRepository $reservableRepository, ReservableIntervalRepository $reservableIntervalRepository)
     {
-        return new JsonResponse($reservableRepository->findHighestCapacity());
+        //-- Get highest capacity of a reservable
+        $singleReservableCapacity = $reservableRepository->findHighestCapacity();
+
+        //-- Get matches
+        $matches = $reservableIntervalRepository->findMatches();
+
+        //-- Get highest capacity when reservables are matched
+        $matchedReservableCapacity = $reservableRepository->findHighestCapacityForMatches($matches);
+
+        return new JsonResponse([
+            'single' => $singleReservableCapacity,
+            'matched' => $matchedReservableCapacity
+        ]);
     }
 
     /**
      * @param Request $request
      * @param SerializerInterface $serializer
      * @return Response
-     * @Rest\Get("/options")
+     * @Rest\Post("/options-by-criteria")
      */
-    public function options(Request $request, SerializerInterface $serializer)
+    public function options(Request $request, SerializerInterface $serializer, EntityManagerInterface $em)
     {
         $requestContent = json_decode($request->getContent(), true);
-        return new Response($serializer->serialize((array) $this->optionRepository->findAll(), 'json'));
+        if (count($requestContent['interval']['ids'] > 1)) {
+            $options = new ArrayCollection();
+            foreach ($requestContent['interval']['ids'] as $id) {
+                $interval = $em->getReference(ReservableInterval::class, $id);
+                $optionsForInterval = $this->optionRepository->findByCriteria($interval);
+                foreach ($optionsForInterval as $optionForInterval) {
+                    if (!$options->contains($optionForInterval)) {
+                        $options->add($optionForInterval);
+                    }
+                }
+            }
+        } else {
+            $interval = $em->getReference(ReservableInterval::class, $requestContent['interval']['ids'][0]);
+            $options = $this->optionRepository->findByCriteria($interval);
+        }
+        return new Response($serializer->serialize($options, 'json', SerializationContext::create()->setGroups([
+            'groups' => 'option'
+        ])));
     }
 
     /**
@@ -165,7 +304,7 @@ class BookingController extends AbstractFOSRestController
      * @throws \Exception
      * @Rest\Post("/bookings")
      */
-    public function createBooking(Request $request, SerializerInterface $serializer) {
+    public function createBooking(Request $request, SerializerInterface $serializer, EventDispatcherInterface $eventDispatcher) {
         $requestContent = json_decode($request->getContent(), true);
         //-- Transfer json into a reservation entity
         $reservation = new Reservation();
@@ -176,6 +315,7 @@ class BookingController extends AbstractFOSRestController
             $address = new Address();
             $address->setName($requestContent['information']['name']);
             $address->setEmail($requestContent['information']['email']);
+            $address->setPhone($requestContent['information']['phone']);
             $address->setStreet($requestContent['information']['street']);
             $address->setPostal($requestContent['information']['postal']);
             $address->setCity($requestContent['information']['city']);
@@ -189,10 +329,25 @@ class BookingController extends AbstractFOSRestController
 
         $date = (new \DateTime($requestContent['date']))->format('Y-m-d');
 
-        $intervalId = $requestContent['interval']['id'];
-        $interval = $this->em->getRepository(ReservableInterval::class)->find($intervalId);
-        $reservation->setReservableInterval($interval);
-        $reservation->setReservable($interval->getReservable());
+        $intervalIds = $requestContent['interval']['ids'];
+        $intervals = new ArrayCollection();
+        $reservables = new ArrayCollection();
+
+        foreach ($intervalIds as $intervalId) {
+            $interval = $this->em->getRepository(ReservableInterval::class)->find($intervalId);
+
+            if (count($requestContent['reservables']) < 2) {
+//                if ($interval->getReservable()->getId() === $requestContent['reservables'][0]['id']) {
+                    $intervals->add($interval);
+                    $reservables->add($interval->getReservable());
+//                }
+            } else {
+                $intervals->add($interval);
+                $reservables->add($interval->getReservable());
+            }
+        }
+        $reservation->setReservableIntervals($intervals);
+        $reservation->setReservables($reservables);
         $reservation->setDate(new \DateTime($date));
 
         foreach ($requestContent['options'] as $option) {
@@ -210,6 +365,11 @@ class BookingController extends AbstractFOSRestController
 
         $this->em->persist($reservation);
         $this->em->flush();
+
+        //-- Dispatch event
+        $event = new ReservationCreated($reservation);
+        $eventDispatcher->dispatch(ReservationCreated::NAME, $event);
+
         return new Response($serializer->serialize($reservation, 'json', SerializationContext::create()->setGroups([
             'groups' => 'reservation'
         ])));

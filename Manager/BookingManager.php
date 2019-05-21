@@ -10,9 +10,12 @@ namespace Comsa\BookingBundle\Manager;
 
 
 use Comsa\BookingBundle\Entity\Reservable;
+use Comsa\BookingBundle\Entity\ReservableInterval;
 use Comsa\BookingBundle\Entity\Reservation;
+use Comsa\BookingBundle\Entity\ReservationException;
 use Comsa\BookingBundle\Repository\ReservableIntervalRepository;
 use Comsa\BookingBundle\Repository\ReservableRepository;
+use Comsa\BookingBundle\Repository\ReservationExceptionRepository;
 use Comsa\BookingBundle\Repository\ReservationRepository;
 
 class BookingManager
@@ -20,25 +23,33 @@ class BookingManager
     private $reservableRepository;
     private $reservationRepository;
     private $reservableIntervalRepository;
+    private $exceptionRepository;
 
-    public function __construct(ReservableRepository $reservableRepository, ReservationRepository $reservationRepository, ReservableIntervalRepository $reservableIntervalRepository)
+    const DAYS = [
+        'Maandag',
+        'Dinsdag',
+        'Woensdag',
+        'Donderdag',
+        'Vrijdag',
+        'Zaterdag',
+        'Zondag'
+    ];
+
+    public function __construct(ReservableRepository $reservableRepository, ReservationRepository $reservationRepository, ReservableIntervalRepository $reservableIntervalRepository, ReservationExceptionRepository $exceptionRepository)
     {
         $this->reservableRepository = $reservableRepository;
         $this->reservationRepository = $reservationRepository;
         $this->reservableIntervalRepository = $reservableIntervalRepository;
+        $this->exceptionRepository = $exceptionRepository;
     }
 
-    public function getDisabledDatesForReservable(Reservable $reservable): array
+    public function getDisabledDatesForReservable(Reservable $reservable, array $dayRange): array
     {
-        $reservations = $this->reservationRepository->findAllUpcomingReservationsByReservable($reservable);
         $disabledDates = [];
 
-        /** @var Reservation $reservation */
-        foreach ($reservations as $reservation) {
-            if ($this->isDayDisabledForReservable($reservable, $reservation->getDate())) {
-                if (!in_array($reservation->getDate(), $disabledDates)) {
-                    $disabledDates[] = $reservation->getDate()->format('Y-m-d');
-                }
+        foreach ($dayRange as $day) {
+            if ($this->isDayDisabledForReservable($reservable, $day)) {
+                $disabledDates[] = $day->format('Y-m-d');
             }
         }
 
@@ -54,37 +65,64 @@ class BookingManager
 
     public function getIntervalsForReservableOnDate(Reservable $reservable, \DateTime $date)
     {
-        $reservations = $this->reservationRepository->findBy([
-            'date' => $date,
-            'reservable' => $reservable
-        ]);
+        $intervals = $reservable->getReservableIntervals()->filter(function(ReservableInterval $interval) use ($date, $reservable) {
+            $exceptions = $this->exceptionRepository->findAllForReservableAndDate($reservable, $date);
+            $passedExceptions = true;
+            /** @var ReservationException $exception */
+            foreach ($exceptions as $exception) {
+                if ($exception->getIntervals()->contains($interval)) {
+                    $passedExceptions = false;
+                    break;
+                }
 
-        if (count($reservations)) {
-            $intervals = $reservable->getReservableIntervals();
-            foreach ($intervals as $key => $interval) {
-                if (count($this->reservationRepository->findBy([
-                    'reservableInterval' => $interval,
-                    'date' => $date,
-                    'reservable' => $reservable
-                ])) > 0) {
-                    unset($intervals[$key]);
+                if ($exception->getDate() && $exception->getDate()->format('Y-m-d') === $date->format('Y-m-d')) {
+                    $passedExceptions = false;
+                    break;
                 }
             }
-        } else {
-            $intervals = $reservable->getReservableIntervals();
-        }
 
+            if (!$passedExceptions) {
+                return $passedExceptions;
+            }
+
+            //-- Find if overlapping intervals ( f.e. a full day interval was reserved )
+            $allReservations = $this->reservationRepository->findAllForCriteria(null, $date, $reservable);
+
+            $overlap = false;
+            /** @var Reservation $reservation */
+            foreach ($allReservations as $reservation) {
+                /** @var ReservableInterval $reservableInterval */
+                foreach ($reservation->getReservableIntervals() as $reservableInterval) {
+
+                    if (
+                        ($interval->getTimeFrom() >= $reservableInterval->getTimeFrom() &&  $interval->getTimeFrom() <= $reservableInterval->getTimeTo()) ||
+                        ($interval->getTimeFrom() <= $reservableInterval->getTimeFrom() && $interval->getTimeTo() >= $reservableInterval->getTimeFrom())
+                    ) {
+                        $overlap = true;
+                        break 2;
+                    }
+                }
+            }
+
+            if ($overlap) {
+                return false;
+            }
+
+            //-- Reservations on this timestamp?
+            $reservations = $this->reservationRepository->findAllForCriteria($interval, $date, $reservable);
+            return count($reservations) === 0;
+        });
         return $intervals;
     }
 
-    public function getDisabledDatesForAmountPersons(int $amountPersons): array
+    public function getDisabledDatesForAmountPersons(int $amountPersons, array $dayRange): array
     {
         //-- Get all possible reservables
         $reservables = $this->reservableRepository->findSuitableReservable($amountPersons);
         $disabledDates = [];
         $disabledDatesForReservables = [];
         foreach ($reservables as $reservable) {
-            $disabledDatesForReservable = $this->getDisabledDatesForReservable($reservable);
+            $disabledDatesForReservable = $this->getDisabledDatesForReservable($reservable, $dayRange);
             $disabledDatesForReservables[] = $disabledDatesForReservable;
             $disabledDates = array_merge($disabledDates, $disabledDatesForReservable);
         }

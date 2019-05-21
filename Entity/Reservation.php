@@ -49,22 +49,24 @@ class Reservation
     private $date;
 
     /**
-     * @ORM\ManyToOne(targetEntity="Comsa\BookingBundle\Entity\Reservable", inversedBy="reservations")
-     * @ORM\JoinColumn(nullable=false)
+     * @ORM\ManyToMany(targetEntity="Comsa\BookingBundle\Entity\Reservable", inversedBy="reservations")
+     * @ORM\JoinTable(name="booking_reservations_reservables")
      * @Serializer\Groups({"reservation"})
      */
-    private $reservable;
+    private $reservables;
 
     /**
-     * @ORM\ManyToOne(targetEntity="Comsa\BookingBundle\Entity\ReservableInterval", inversedBy="reservations")
-     * @ORM\JoinColumn(nullable=false)
+     * @ORM\ManyToMany(targetEntity="Comsa\BookingBundle\Entity\ReservableInterval", inversedBy="reservations")
+     * @ORM\JoinTable(name="booking_reservations_reservables_intervals")
      * @Serializer\Groups({"reservation"})
      */
-    private $reservableInterval;
+    private $reservableIntervals;
 
     public function __construct()
     {
         $this->reservationOptions = new ArrayCollection();
+        $this->reservables = new ArrayCollection();
+        $this->reservableIntervals = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -139,26 +141,26 @@ class Reservation
         return $this;
     }
 
-    public function getReservable(): ?Reservable
+    public function getReservables(): Collection
     {
-        return $this->reservable;
+        return $this->reservables;
     }
 
-    public function setReservable(?Reservable $reservable): self
+    public function setReservables(Collection $reservables): self
     {
-        $this->reservable = $reservable;
+        $this->reservables = $reservables;
 
         return $this;
     }
 
-    public function getReservableInterval(): ?ReservableInterval
+    public function getReservableIntervals(): Collection
     {
-        return $this->reservableInterval;
+        return $this->reservableIntervals;
     }
 
-    public function setReservableInterval(?ReservableInterval $reservableInterval): self
+    public function setReservableIntervals(Collection $reservableIntervals): self
     {
-        $this->reservableInterval = $reservableInterval;
+        $this->reservableIntervals = $reservableIntervals;
 
         return $this;
     }
@@ -170,7 +172,11 @@ class Reservation
      */
     public function getStartDate()
     {
-        return new \DateTime($this->getDate()->format('Y-m-d') . ' ' . $this->getReservableInterval()->getTimeFrom()->format('H:i:s'));
+        $return = new \DateTime($this->getDate()->format('Y-m-d'));
+        if ($this->getReservableIntervals()->first() instanceof ReservableInterval) {
+            return new \DateTime($this->getDate()->format('Y-m-d') . ' ' . $this->getReservableIntervals()->first()->getTimeFrom()->format('H:i:s'));
+        };
+        return $return;
     }
 
     /**
@@ -181,6 +187,10 @@ class Reservation
      */
     public function getEndDate()
     {
-        return new \DateTime($this->getDate()->format('Y-m-d') . ' ' . $this->getReservableInterval()->getTimeTo()->format('H:i:s'));
+        $return = new \DateTime($this->getDate()->format('Y-m-d'));
+        if ($this->getReservableIntervals()->first() instanceof ReservableInterval) {
+            return new \DateTime($this->getDate()->format('Y-m-d') . ' ' . $this->getReservableIntervals()->first()->getTimeTo()->format('H:i:s'));
+        };
+        return $return;
     }
 }

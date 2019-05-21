@@ -28,6 +28,13 @@ class Address
     private $email;
 
     /**
+     * @var string $phone
+     * @ORM\Column(type="string")
+     * @Serializer\Groups({"reservation"})
+     */
+    private $phone;
+
+    /**
      * @ORM\Column(type="string", length=255)
      * @Serializer\Groups({"reservation"})
      */
@@ -82,6 +89,16 @@ class Address
         $this->email = $email;
 
         return $this;
+    }
+
+    public function getPhone(): ?string
+    {
+        return $this->phone;
+    }
+
+    public function setPhone(string $phone = null): void
+    {
+        $this->phone = $phone;
     }
 
     public function getName(): ?string

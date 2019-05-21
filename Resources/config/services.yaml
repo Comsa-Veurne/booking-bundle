@@ -31,3 +31,12 @@ services:
     class: JMS\Serializer\Naming\SerializedNameAnnotationStrategy
     arguments:
       - '@jms_serializer.identical_property_naming_strategy'
+
+  comsa_booking_listener:
+    class: Comsa\BookingBundle\EventListener\BookingListener
+    tags:
+      - { name: kernel.event_listener, event: reservation.created }
+    arguments:
+      - '@mailer'
+      - '@twig'
+      - '@jms_serializer'

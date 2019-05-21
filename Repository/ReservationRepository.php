@@ -3,6 +3,7 @@
 namespace Comsa\BookingBundle\Repository;
 
 use Comsa\BookingBundle\Entity\Reservable;
+use Comsa\BookingBundle\Entity\ReservableInterval;
 use Comsa\BookingBundle\Entity\Reservation;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Symfony\Bridge\Doctrine\RegistryInterface;
@@ -23,9 +24,37 @@ class ReservationRepository extends ServiceEntityRepository
     public function findAllForOverview()
     {
         return $this->createQueryBuilder('r')
-            ->innerJoin('r.reservableInterval', 'ri')
+            ->innerJoin('r.reservableIntervals', 'ri')
             ->orderBy('r.date', 'ASC')
             ->addOrderBy('ri.timeTo', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    public function findAllForCriteria(?ReservableInterval $interval, $date, Reservable $reservable)
+    {
+        $params = [
+            'reservable' => $reservable,
+            'date' => $date->format('Y-m-d')
+        ];
+
+        $qb = $this->createQueryBuilder('r')
+            ->innerJoin('r.reservableIntervals', 'i')
+            ->innerJoin('r.reservables', 'rv')
+            ->andWhere('rv = :reservable');
+
+        if ($interval) {
+            $qb
+                ->andWhere('i = :interval');
+
+            $params['interval'] = $interval;
+        }
+
+        $qb
+            ->andWhere('r.date = :date')
+            ->setParameters($params);
+
+        return $qb
             ->getQuery()
             ->getResult();
     }

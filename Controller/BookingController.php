@@ -333,19 +333,26 @@ class BookingController extends AbstractFOSRestController
         $intervals = new ArrayCollection();
         $reservables = new ArrayCollection();
 
-        foreach ($intervalIds as $intervalId) {
-            $interval = $this->em->getRepository(ReservableInterval::class)->find($intervalId);
+        $capacity = 0;
 
-            if (count($requestContent['reservables']) < 2) {
-//                if ($interval->getReservable()->getId() === $requestContent['reservables'][0]['id']) {
-                    $intervals->add($interval);
-                    $reservables->add($interval->getReservable());
-//                }
-            } else {
-                $intervals->add($interval);
+        foreach ($intervalIds as $intervalId) {
+            /** @var ReservableInterval $interval */
+            $interval = $this->em->getRepository(ReservableInterval::class)->find($intervalId);
+            $capacity += $interval->getReservable()->getCapacity();
+
+            $intervals->add($interval);
+
+            if ($capacity >= $reservation->getAmountPersons()) {
+                break;
+            }
+        }
+
+        foreach ($intervals as $interval) {
+            if (!$reservables->contains($interval->getReservable())) {
                 $reservables->add($interval->getReservable());
             }
         }
+
         $reservation->setReservableIntervals($intervals);
         $reservation->setReservables($reservables);
         $reservation->setDate(new \DateTime($date));

@@ -45,26 +45,43 @@
     </tr>
     </tbody>
 </table>
-    {% if booking.reservationOptions|length %}
-    <h2>Extra opties</h2>
-    <table>
-        <thead>
-        <tr>
-            <th></th>
-            <th>Prijs</th>
-            <th>Aantal</th>
-            <th>Totaal</th>
-        </tr>
-        </thead>
-        <tbody>
-        {% for reservationOption in booking.reservationOptions %}
-        <tr>
-            <td>{{ reservationOption.linkedOption.title }}</td>
-            <td>{{ '€' ~ reservationOption.linkedOption.price }}</td>
-            <td>{{ reservationOption.times }}</td>
-            <td>{{ '€' ~ reservationOption.times * reservationOption.linkedOption.price }}</td>
-        </tr>
-        {% endfor %}
-        </tbody>
-    </table>
-    {% endif %}
+{% if booking.reservationOptions|length %}
+<h2>Extra opties</h2>
+<table>
+    <thead>
+    <tr>
+        <th></th>
+        <th>Prijs</th>
+        <th>Aantal</th>
+        <th>Totaal</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for reservationOption in booking.reservationOptions %}
+    <tr>
+        <td>{{ reservationOption.linkedOption.title }}</td>
+        <td>{{ '€' ~ reservationOption.linkedOption.price }}</td>
+        <td>{{ reservationOption.times }}</td>
+        <td>{{ '€' ~ reservationOption.times * reservationOption.linkedOption.price }}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% endif %}
+
+<table>
+    <thead>
+    <tr>
+        <th>Prijs huur</th>
+        <th>Prijs opties</th>
+        <th>Totaal</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+        <td>{{ booking.rentalPrice }}</td>
+        <td>{{ booking.optionsPrice }}</td>
+        <td>{{ booking.total }}</td>
+    </tr>
+    </tbody>
+</table>

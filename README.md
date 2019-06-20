@@ -8,7 +8,8 @@ Add to AppKernel.php to bundles []
 
 ```
 new \Comsa\BookingBundle\ComsaBookingBundle(),
-new \JMS\SerializerBundle\JMSSerializerBundle()
+new \JMS\SerializerBundle\JMSSerializerBundle(),
+new \FOS\RestBundle\FOSRestBundle()
 ```
 
 Add following to top of routing.yaml:

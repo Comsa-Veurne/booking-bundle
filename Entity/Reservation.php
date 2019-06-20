@@ -193,4 +193,30 @@ class Reservation
         };
         return $return;
     }
+
+    public function getRentalPrice()
+    {
+        $price = 0;
+        /** @var ReservableInterval $interval */
+        foreach ($this->getReservableIntervals() as $interval) {
+            $price += $interval->getPrice();
+        }
+
+        //TODO: price per person
+        return $price;
+    }
+
+    public function getOptionsPrice()
+    {
+        $price = 0;
+        /** @var ReservationOption $option */
+        foreach ($this->getReservationOptions() as $option) {
+            $price += $option->getLinkedOption()->getPrice() * $option->getTimes();
+        }
+        return $price;
+    }
+
+    public function getTotal() {
+        return $this->getRentalPrice() + $this->getOptionsPrice();
+    }
 }

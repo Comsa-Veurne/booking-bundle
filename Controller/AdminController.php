@@ -441,6 +441,6 @@ class AdminController extends AbstractFOSRestController
      */
     public function exceptions(SerializerInterface $serializer, ReservationExceptionRepository $exceptionRepository)
     {
-        return new Response($serializer->serialize($exceptionRepository->findAll(), 'json'));
+        return new Response($serializer->serialize($exceptionRepository->findAll(), 'json', SerializationContext::create()->setGroups(['exceptions'])));
     }
 }

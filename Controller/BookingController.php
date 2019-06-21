@@ -277,7 +277,7 @@ class BookingController extends AbstractFOSRestController
     public function options(Request $request, SerializerInterface $serializer, EntityManagerInterface $em)
     {
         $requestContent = json_decode($request->getContent(), true);
-        if (count($requestContent['interval']['ids'] > 1)) {
+        if (count($requestContent['interval']['ids']) > 1) {
             $options = new ArrayCollection();
             foreach ($requestContent['interval']['ids'] as $id) {
                 $interval = $em->getReference(ReservableInterval::class, $id);

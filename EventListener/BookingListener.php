@@ -34,7 +34,7 @@ class BookingListener
     public function onReservationCreated(ReservationCreated $event)
     {
         $messageClient = (new \Swift_Message('Bedankt voor uw reservatie.'))
-            ->setFrom('cms@comsa.be')
+            ->setFrom(['info@hooipiete.be' => 'De Hooipiete'])
             ->setTo($event->getReservation()->getAddress()->getEmail())
             ->setBody(
                 $this->twig->render('@ComsaBooking/mail/thanks.html.twig', [
@@ -44,8 +44,9 @@ class BookingListener
             );
 
         $messageAdmin = (new \Swift_Message('Nieuwe reservatie via booking module.'))
-            ->setFrom('cms@comsa.be')
-            ->setTo('ciryk@comsa.be')
+            ->setFrom(['info@hooipiete.be' => 'De Hooipiete'])
+            ->setTo('info@hooipiete.be')
+            ->addCc('carlodhont@gmail.com')
             ->setBody(
                 $this->twig->render('@ComsaBooking/mail/reservation.html.twig', [
                     'booking' => $event->getReservation()

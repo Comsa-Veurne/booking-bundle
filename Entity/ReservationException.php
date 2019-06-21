@@ -26,14 +26,14 @@ class ReservationException
      * @ORM\Id
      * @ORM\GeneratedValue(strategy="AUTO")
      * @ORM\Column(type="integer")
-     * @Serializer\Groups({"exception"})
+     * @Serializer\Groups({"exceptions", "exception"})
      */
     private $id;
 
     /**
      * @var \DateTime|null
      * @ORM\Column(type="date", nullable=true)
-     * @Serializer\Groups("exception")
+     * @Serializer\Groups({"exceptions", "exception"})
      */
     private $date;
 
@@ -47,21 +47,21 @@ class ReservationException
     /**
      * @var int|null
      * @ORM\Column(type="integer", nullable=true)
-     * @Serializer\Groups("exception")
+     * @Serializer\Groups({"exceptions", "exception"})
      */
     private $day;
 
     /**
      * @var \DateTime|null
      * @ORM\Column(type="datetime", nullable=true)
-     * @Serializer\Groups({"exception"})
+     * @Serializer\Groups({"exceptions", "exception"})
      */
     private $activeFrom;
 
     /**
      * @var \DateTime|null
      * @ORM\Column(type="datetime", nullable=true)
-     * @Serializer\Groups({"exception"})
+     * @Serializer\Groups({"exceptions", "exception"})
      */
     private $activeTill;
 
@@ -188,6 +188,7 @@ class ReservationException
     /**
      * @return string
      * @Serializer\VirtualProperty()
+     * @Serializer\Groups({"exceptions"})
      */
     public function getSummary()
     {
@@ -200,6 +201,7 @@ class ReservationException
 
     /**
      * @Serializer\VirtualProperty()
+     * @Serializer\Groups({"exceptions"})
      */
     public function getRules()
     {

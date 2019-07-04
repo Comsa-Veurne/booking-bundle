@@ -102,6 +102,7 @@ class BookingController extends AbstractFOSRestController
                     }
                 }
             }
+            $disabledDatesCollection = array_values($disabledDatesCollection);
             return new JsonResponse(array_unique($disabledDatesCollection));
         } else {
             //-- Certain match was given
@@ -111,6 +112,7 @@ class BookingController extends AbstractFOSRestController
                 $reservableEntity = $em->getReference(Reservable::class, $reservable['id']);
                 $disabledDatesCollection = array_merge($disabledDatesCollection, $bookingManager->getDisabledDatesForReservable($reservableEntity, $dayRange));
             }
+            $disabledDatesCollection = array_values($disabledDatesCollection);
             return new JsonResponse(array_unique($disabledDatesCollection));
         }
     }

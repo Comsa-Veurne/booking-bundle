@@ -72,15 +72,11 @@ class BookingManager
              * The only thing that needs to be validated is if it's the right day or date and that the intervals are available
              */
             $exceptions = $this->exceptionRepository->findAllForReservableAndDate($reservable, $date);
+
             $passedExceptions = true;
             /** @var ReservationException $exception */
             foreach ($exceptions as $exception) {
                 if ($exception->getIntervals()->contains($interval)) {
-                    $passedExceptions = false;
-                    break;
-                }
-
-                if ($exception->getDate() && $exception->getDate()->format('Y-m-d') === $date->format('Y-m-d')) {
                     $passedExceptions = false;
                     break;
                 }
@@ -122,6 +118,7 @@ class BookingManager
             $reservations = $this->reservationRepository->findAllForCriteria($interval, $date, $reservable);
             return count($reservations) === 0;
         });
+        
         return $intervals;
     }
 

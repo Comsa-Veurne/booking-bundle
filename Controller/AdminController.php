@@ -284,7 +284,7 @@ class AdminController extends AbstractFOSRestController
         }
 
         if (isset($requestContent['activeFrom'])) {
-            $exception->setActiveFrom((new \DateTime())->setTimestamp(strtotime($requestContent['availableFrom'])));
+            $exception->setActiveFrom((new \DateTime())->setTimestamp(strtotime($requestContent['activeFrom'])));
         }
 
         if (isset($requestContent['activeTill'])) {
@@ -332,12 +332,12 @@ class AdminController extends AbstractFOSRestController
             $exception->setDay($requestContent['day']);
         }
 
-        if (isset($requestContent['availableTill'])) {
-            $exception->setActiveFrom((new \DateTime())->setTimestamp(strtotime($requestContent['availableTill'])));
+        if (isset($requestContent['activeFrom'])) {
+            $exception->setActiveFrom((new \DateTime())->setTimestamp(strtotime($requestContent['activeFrom'])));
         }
 
-        if (isset($requestContent['availableFrom'])) {
-            $exception->setActiveTill((new \DateTime())->setTimestamp(strtotime($requestContent['availableFrom'])));
+        if (isset($requestContent['activeTill'])) {
+            $exception->setActiveTill((new \DateTime())->setTimestamp(strtotime($requestContent['activeTill'])));
         }
 
         if (isset($requestContent['intervals']) && is_array($requestContent['intervals'])) {

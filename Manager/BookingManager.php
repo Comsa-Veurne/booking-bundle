@@ -60,12 +60,17 @@ class BookingManager
 
     public function isDayDisabledForReservable(Reservable $reservable, $date)
     {
-        return count($this->getIntervalsForReservableOnDate($reservable, $date)) > 0 ? false : true;
+        $intervals = $this->getIntervalsForReservableOnDate($reservable, $date);
+        return count($intervals) > 0 ? false : true;
     }
 
     public function getIntervalsForReservableOnDate(Reservable $reservable, \DateTime $date)
     {
         $intervals = $reservable->getReservableIntervals()->filter(function(ReservableInterval $interval) use ($date, $reservable) {
+            /**
+             * These are only the reservations available for the date, reservable and activeTill, activeFrom
+             * The only thing that needs to be validated is if it's the right day or date and that the intervals are available
+             */
             $exceptions = $this->exceptionRepository->findAllForReservableAndDate($reservable, $date);
             $passedExceptions = true;
             /** @var ReservationException $exception */
@@ -76,6 +81,11 @@ class BookingManager
                 }
 
                 if ($exception->getDate() && $exception->getDate()->format('Y-m-d') === $date->format('Y-m-d')) {
+                    $passedExceptions = false;
+                    break;
+                }
+
+                if ($exception->getIntervals()->isEmpty()) {
                     $passedExceptions = false;
                     break;
                 }

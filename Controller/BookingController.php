@@ -103,7 +103,7 @@ class BookingController extends AbstractFOSRestController
                 }
             }
             $disabledDatesCollection = array_values($disabledDatesCollection);
-            return new JsonResponse((array) array_unique($disabledDatesCollection));
+            return new JsonResponse(array_values((array) array_unique($disabledDatesCollection)));
         }
 
         //-- Certain match was given
@@ -327,7 +327,7 @@ class BookingController extends AbstractFOSRestController
         $reservation->setAddress(
             $address
         );
-        $reservation->setAmountPersons($requestContent['amountPersons']);
+        $reservation->setAmountPersons((int) $requestContent['amountPersons']);
 
         $date = (new \DateTime($requestContent['date']))->format('Y-m-d');
 

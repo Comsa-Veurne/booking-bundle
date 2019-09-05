@@ -118,7 +118,7 @@ class BookingManager
             $reservations = $this->reservationRepository->findAllForCriteria($interval, $date, $reservable);
             return count($reservations) === 0;
         });
-        
+
         return $intervals;
     }
 

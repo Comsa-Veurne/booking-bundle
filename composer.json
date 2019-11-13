@@ -15,7 +15,7 @@
         "gesdinet/jwt-refresh-token-bundle": "^0.6.2",
         "friendsofsymfony/rest-bundle": "^2.5",
         "symfony/orm-pack": "^1.0",
-        "symfony/framework-bundle": "3.4.14",
+        "symfony/framework-bundle": "3.4.26",
         "nelmio/cors-bundle": "^1.5"
     },
     "autoload": {

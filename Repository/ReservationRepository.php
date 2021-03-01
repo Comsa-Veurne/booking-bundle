@@ -25,6 +25,7 @@ class ReservationRepository extends ServiceEntityRepository
     {
         return $this->createQueryBuilder('r')
             ->innerJoin('r.reservableIntervals', 'ri')
+            ->leftJoin('r.payment', 'p')
             ->orderBy('r.date', 'ASC')
             ->addOrderBy('ri.timeTo', 'ASC')
             ->getQuery()

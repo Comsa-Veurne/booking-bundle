@@ -64,6 +64,7 @@ class Reservation
 
     /**
      * @ORM\OneToOne(targetEntity="Comsa\BookingBundle\Entity\Payment", mappedBy="reservation")
+     * @Serializer\Groups({"reservation"})
      */
     private $payment;
 
@@ -226,20 +227,7 @@ class Reservation
     }
 
 
-    public function getPaymentMethod()
-    {
-        return $this->paymentMethod;
-    }
-
-
-    public function setPaymentMethod($paymentMethod): void
-    {
-        $this->paymentMethod = $paymentMethod;
-    }
-
-
-
-    public function getPayment()
+    public function getPayment(): ?Payment
     {
         return $this->payment;
     }
@@ -248,6 +236,4 @@ class Reservation
     {
         $this->payment = $payment;
     }
-
-
 }

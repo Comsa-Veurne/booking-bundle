@@ -6,6 +6,7 @@ namespace Comsa\BookingBundle\Entity;
 
 use Comsa\BookingBundle\Entity\Traits\TimestampableTrait;
 use Doctrine\ORM\Mapping as ORM;
+use JMS\Serializer\Annotation as Serializer;
 
 /**
  * @ORM\Entity
@@ -35,11 +36,13 @@ class Payment
 
     /**
      * @ORM\Column(type="string", nullable=true)
+     * @Serializer\Groups({"payment", "reservation"})
      */
     private $externalId;
 
     /**
      * @ORM\Column(type="datetime", nullable=true)
+     * @Serializer\Groups({"payment", "reservation"})
      */
     private $paymentCompletedAt;
 

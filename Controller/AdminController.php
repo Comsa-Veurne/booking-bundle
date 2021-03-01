@@ -56,6 +56,13 @@ class AdminController extends AbstractFOSRestController
      */
     public function reservations(ReservationRepository $reservationRepository, SerializerInterface $serializer)
     {
+//        foreach ($reservationRepository->findAllForOverview() as $res){
+//            if ($res->getPayment())
+//            {
+//                dump($res->getPayment()->getPaymentCompletedAt());
+//            }
+//        }
+
         return new Response($serializer->serialize(
             $reservationRepository->findAllForOverview(),
             'json',
@@ -70,6 +77,7 @@ class AdminController extends AbstractFOSRestController
     public function reservation(int $id, SerializerInterface $serializer, ReservationRepository $reservationRepository)
     {
         $reservation = $reservationRepository->find($id);
+        $payment = $reservation->getPayment();
         return new Response($serializer->serialize($reservation, 'json', SerializationContext::create()->setGroups(['reservation'])));
     }
 

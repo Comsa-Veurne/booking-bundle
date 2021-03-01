@@ -17,6 +17,8 @@ use Comsa\BookingBundle\Repository\ReservableIntervalRepository;
 use Comsa\BookingBundle\Repository\ReservableRepository;
 use Comsa\BookingBundle\Repository\ReservationExceptionRepository;
 use Comsa\BookingBundle\Repository\ReservationRepository;
+use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\HttpFoundation\Session\SessionInterface;
 
 class BookingManager
 {
@@ -24,6 +26,8 @@ class BookingManager
     private $reservationRepository;
     private $reservableIntervalRepository;
     private $exceptionRepository;
+    private $session;
+    private $entityManager;
 
     const DAYS = [
         'Maandag',
@@ -35,12 +39,14 @@ class BookingManager
         'Zondag'
     ];
 
-    public function __construct(ReservableRepository $reservableRepository, ReservationRepository $reservationRepository, ReservableIntervalRepository $reservableIntervalRepository, ReservationExceptionRepository $exceptionRepository)
+    public function __construct(ReservableRepository $reservableRepository, ReservationRepository $reservationRepository, ReservableIntervalRepository $reservableIntervalRepository, ReservationExceptionRepository $exceptionRepository, SessionInterface $session, EntityManagerInterface $entityManager)
     {
         $this->reservableRepository = $reservableRepository;
         $this->reservationRepository = $reservationRepository;
         $this->reservableIntervalRepository = $reservableIntervalRepository;
         $this->exceptionRepository = $exceptionRepository;
+        $this->session = $session;
+        $this->entityManager = $entityManager;
     }
 
     public function getDisabledDatesForReservable(Reservable $reservable, array $dayRange): array
@@ -71,6 +77,7 @@ class BookingManager
              * These are only the reservations available for the date, reservable and activeTill, activeFrom
              * The only thing that needs to be validated is if it's the right day or date and that the intervals are available
              */
+
             $exceptions = $this->exceptionRepository->findAllForReservableAndDate($reservable, $date);
 
             $passedExceptions = true;
@@ -145,5 +152,33 @@ class BookingManager
         }
 
         return $disabledDates;
+    }
+
+    public function create()
+    {
+        $reservation = new Reservation();
+        $this->session->set('reservation', $reservation);
+        return $reservation;
+    }
+
+    //-- Get reservation in session
+    public function get(): Reservation
+    {
+        if ($this->session->has('reservation') && $this->session->get('reservation') instanceof Reservation){
+            $reservation = $this->entityManager->getRepository(Reservation::class)->find($this->session->get('reservation')->getId());
+            if ($reservation instanceof Reservation){
+                return $reservation;
+            }
+        }
+
+        return $this->create();
+    }
+
+    public function save(Reservation $reservation)
+    {
+        $this->entityManager->persist($reservation);
+        flush();
+
+        $this->session->set('reservation', $reservation);
     }
 }

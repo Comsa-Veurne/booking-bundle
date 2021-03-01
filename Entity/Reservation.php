@@ -62,6 +62,11 @@ class Reservation
      */
     private $reservableIntervals;
 
+    /**
+     * @ORM\OneToOne(targetEntity="Comsa\BookingBundle\Entity\Payment", mappedBy="reservation")
+     */
+    private $payment;
+
     public function __construct()
     {
         $this->reservationOptions = new ArrayCollection();
@@ -219,4 +224,30 @@ class Reservation
     public function getTotal() {
         return $this->getRentalPrice() + $this->getOptionsPrice();
     }
+
+
+    public function getPaymentMethod()
+    {
+        return $this->paymentMethod;
+    }
+
+
+    public function setPaymentMethod($paymentMethod): void
+    {
+        $this->paymentMethod = $paymentMethod;
+    }
+
+
+
+    public function getPayment()
+    {
+        return $this->payment;
+    }
+
+    public function setPayment($payment): void
+    {
+        $this->payment = $payment;
+    }
+
+
 }

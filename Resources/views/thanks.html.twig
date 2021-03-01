@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+        content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+  <link rel="stylesheet" href="{{ asset(theme.assets_url ~ 'booking_front.css') }}">
+</head>
+<body>
+<div class="container text-center my-2">
+  <img src="/images/logo.png" alt="">
+</div>
+<div class="container">
+  <h1>Booking</h1>
+  <div class="row">
+    <div class="col-md-8">
+      <div v-if="step === 5">
+        <div class="alert alert-success">
+          <p>
+            Bedankt! <br>
+            Indien alles goed is verlopen, ontvangt u een bevestigingsmail!
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

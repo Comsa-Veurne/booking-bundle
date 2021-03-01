@@ -2,6 +2,7 @@
 
 namespace Comsa\BookingBundle\Controller;
 
+use Comsa\BookingBundle\Repository\ReservableIntervalRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
@@ -25,6 +26,15 @@ class FrontController extends AbstractController
             'theme' => [
                 'assets_url' => $this->params->get('theme.assets_url')
             ],
+        ]);
+    }
+    public function thanks()
+    {
+        return $this->render('@ComsaBooking/thanks.html.twig',
+        [
+            'theme' => [
+                'assets_url' => $this->params->get('theme.assets_url')
+            ]
         ]);
     }
 }

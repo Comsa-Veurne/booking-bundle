@@ -18,3 +18,23 @@ booking_front:
   type: annotation
   resource: Comsa\BookingBundle\Controller\BookingController
   prefix: /booking/api
+
+booking_select_payment:
+  path: '/select-payment'
+  controller: Comsa\BookingBundle\Controller\PaymentController::select
+
+booking_handle_payment:
+  path: '/handle-payment'
+  controller: Comsa\BookingBundle\Controller\PaymentController::handle
+
+booking_handle_payment_redirect:
+  path: '/handle-payment-redirect'
+  controller: Comsa\BookingBundle\Controller\PaymentController::handleRedirect
+
+booking_webhook_payment:
+  path: '/webhook-payment'
+  controller: Comsa\BookingBundle\Controller\PaymentController::webhook
+
+booking_thanks:
+  path: '/thank-you'
+  controller: Comsa\BookingBundle\Controller\FrontController:thanks

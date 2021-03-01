@@ -22,6 +22,7 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\Session\SessionInterface;
 use Symfony\Component\Routing\Annotation\Route;
 use JMS\Serializer\SerializationContext;
 use JMS\Serializer\SerializerInterface;
@@ -43,12 +44,18 @@ class BookingController extends AbstractFOSRestController
     private $em;
 
     /**
+     * @var SessionInterface
+     */
+    private $session;
+
+    /**
      * BookingController constructor.
      */
-    public function __construct(OptionRepository $optionRepository, EntityManagerInterface $em)
+    public function __construct(OptionRepository $optionRepository, EntityManagerInterface $em, SessionInterface $session)
     {
         $this->optionRepository = $optionRepository;
         $this->em = $em;
+        $this->session = $session;
     }
 
     /**
@@ -374,10 +381,11 @@ class BookingController extends AbstractFOSRestController
 
         $this->em->persist($reservation);
         $this->em->flush();
+        $this->session->set('reservation', $reservation);
 
         //-- Dispatch event
-        $event = new ReservationCreated($reservation);
-        $eventDispatcher->dispatch(ReservationCreated::NAME, $event);
+//        $event = new ReservationCreated($reservation);
+//        $eventDispatcher->dispatch(ReservationCreated::NAME, $event);
 
         return new Response($serializer->serialize($reservation, 'json', SerializationContext::create()->setGroups([
             'groups' => 'reservation'

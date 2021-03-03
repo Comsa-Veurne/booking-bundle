@@ -39,6 +39,7 @@ class ReservationExceptionRepository extends ServiceEntityRepository
                 'reservable' => $reservable,
                 'now' => $date->format('Y-m-d')
             ])
-            ->getQuery();
+            ->getQuery()
+            ->getResult();
     }
 }

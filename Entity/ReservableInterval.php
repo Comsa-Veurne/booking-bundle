@@ -119,7 +119,7 @@ class ReservableInterval
         return $this;
     }
 
-    public function getTimeFrom(): ?\DateTime
+    public function getTimeFrom(): ?\DateTimeInterface
     {
         return $this->timeFrom;
     }
@@ -131,7 +131,7 @@ class ReservableInterval
         return $this;
     }
 
-    public function getTimeTo(): ?\DateTime
+    public function getTimeTo(): ?\DateTimeInterface
     {
         return $this->timeTo;
     }

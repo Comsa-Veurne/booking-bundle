@@ -252,6 +252,8 @@ class BookingController extends AbstractFOSRestController
             $return[] = $interval;
         }
 
+
+        usort($return, array('self','sortByInterval'));
         return new JsonResponse($return);
     }
 
@@ -390,5 +392,11 @@ class BookingController extends AbstractFOSRestController
         return new Response($serializer->serialize($reservation, 'json', SerializationContext::create()->setGroups([
             'groups' => 'reservation'
         ])));
+    }
+
+    private static function sortByInterval($a, $b) {
+        $aFrom = str_replace(':','',$a['from']);
+        $bFrom = str_replace(':','',$b['from']);
+        return $aFrom - $bFrom;
     }
 }

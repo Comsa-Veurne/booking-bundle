@@ -167,11 +167,10 @@ class BookingManager
         if ($this->session->has('reservation') && $this->session->get('reservation') instanceof Reservation){
             $reservation = $this->entityManager->getRepository(Reservation::class)->find($this->session->get('reservation')->getId());
             if ($reservation instanceof Reservation){
+                $this->session->remove('reservation');
                 return $reservation;
             }
         }
-
-        return $this->create();
     }
 
     public function save(Reservation $reservation)

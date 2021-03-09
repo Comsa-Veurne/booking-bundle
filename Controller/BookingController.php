@@ -383,6 +383,7 @@ class BookingController extends AbstractFOSRestController
 
         $this->em->persist($reservation);
         $this->em->flush();
+
         $this->session->set('reservation', $reservation);
 
         //-- Dispatch event

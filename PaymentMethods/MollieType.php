@@ -91,8 +91,7 @@ class MollieType
     public function afterSuccessWebhook(Payment $payment): void
     {
         //-- Trigger event after successfullwebhook
-        $this->confirmReservation();
-        $this->fullfillReservation($payment->getReservation());
+        $this->confirmReservation($payment->getReservation());
     }
 
     protected function confirmReservation(Reservation $reservation)

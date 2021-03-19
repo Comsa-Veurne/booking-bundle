@@ -73,7 +73,7 @@ class PaymentController extends AbstractController
         $isPaid = $typeHandler->checkPayment($payment);
 
         if (!$isPaid){
-            return new Reponse('Status has not changed', Response::HTTP_OK);
+            return new Response('Status has not changed', Response::HTTP_OK);
         }
 
         //-- If checkpayment returns true, set paymentCompletedAt to current datetime

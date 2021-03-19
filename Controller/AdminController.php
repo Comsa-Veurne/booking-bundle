@@ -3,6 +3,7 @@ namespace Comsa\BookingBundle\Controller;
 
 
 use Comsa\BookingBundle\Entity\Option;
+use Comsa\BookingBundle\Entity\Payment;
 use Comsa\BookingBundle\Entity\Reservable;
 use Comsa\BookingBundle\Entity\ReservableInterval;
 use Comsa\BookingBundle\Entity\Reservation;
@@ -88,6 +89,8 @@ class AdminController extends AbstractFOSRestController
     public function deleteReservation($id, Request $request, EntityManagerInterface $entityManager)
     {
         $reservation = $entityManager->getReference(Reservation::class, $id);
+
+        $entityManager->remove($reservation->getPayment());
         $entityManager->remove($reservation);
         $entityManager->flush();
 

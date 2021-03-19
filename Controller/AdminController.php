@@ -90,7 +90,10 @@ class AdminController extends AbstractFOSRestController
     {
         $reservation = $entityManager->getReference(Reservation::class, $id);
 
-        $entityManager->remove($reservation->getPayment());
+        if ($reservation->getPayment())
+        {
+            $entityManager->remove($reservation->getPayment());
+        }
         $entityManager->remove($reservation);
         $entityManager->flush();
 
